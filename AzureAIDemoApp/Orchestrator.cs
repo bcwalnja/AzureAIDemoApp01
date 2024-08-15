@@ -10,16 +10,18 @@ namespace AzureAIDemoApp
     internal class Orchestrator
     {
         private readonly ChatClient _chatClient;
-        private readonly string metaPrompt;
         private readonly int retentionCount;
         private readonly List<ChatMessage> _messages = [];
 
         public Orchestrator(ChatClient chatClient, string metaPrompt, int retentionCount)
         {
             _chatClient = chatClient;
-            this.metaPrompt = metaPrompt;
             this.retentionCount = retentionCount;
-            _messages.Add(new SystemChatMessage(metaPrompt));
+            if (!string.IsNullOrWhiteSpace(metaPrompt))
+            {
+                _messages.Add(new SystemChatMessage(metaPrompt));
+                this.retentionCount += 1;
+            }
         }
 
         public async Task<ChatCompletion> GetResponse(string message, bool verbose = false)
@@ -43,12 +45,7 @@ namespace AzureAIDemoApp
         private void AddUserMessageToMessages(string message)
         {
             _messages.Add(new UserChatMessage(message));
-
-            // add one because of meta prompt
-            if (_messages.Count > retentionCount + 1)
-            {
-                _messages.RemoveAt(1);
-            }
+            _messages.RemoveAt(1);
         }
 
         private async Task<ChatCompletion> CompleteChatAsync()
@@ -69,12 +66,7 @@ namespace AzureAIDemoApp
         {
             var assistantMessages = completion.Content.Select(c => c.Text);
             _messages.Add(new AssistantChatMessage(string.Join("\n", assistantMessages)));
-
-            // add one because of meta prompt
-            if (_messages.Count > retentionCount + 1)
-            {
-                _messages.RemoveAt(1);
-            }
+            _messages.RemoveAt(1);
         }
     }
 }

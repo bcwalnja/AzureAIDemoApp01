@@ -45,7 +45,7 @@ namespace AzureAIDemoApp
         private void AddUserMessageToMessages(string message)
         {
             _messages.Add(new UserChatMessage(message));
-            _messages.RemoveAt(1);
+            _messages.RemoveAt(0);
         }
 
         private async Task<ChatCompletion> CompleteChatAsync()
@@ -66,7 +66,7 @@ namespace AzureAIDemoApp
         {
             var assistantMessages = completion.Content.Select(c => c.Text);
             _messages.Add(new AssistantChatMessage(string.Join("\n", assistantMessages)));
-            _messages.RemoveAt(1);
+            _messages.RemoveAt(0);
         }
     }
 }

@@ -42,7 +42,6 @@ Console.WriteLine("Type 'exit' to quit.");
 
 while (true)
 {
-    // add logging to this code
     Console.Write("You: ");
     string message = Console.ReadLine();
     if (message == "exit")

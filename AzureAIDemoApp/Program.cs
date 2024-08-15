@@ -4,32 +4,12 @@ using AzureAIDemoApp;
 using OpenAI.Chat;
 using System.Text.Json;
 
-Console.WriteLine("Loading URI and Access Key");
-var appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-var filepath = Path.Combine(appdata, "secrets.json");
-var json = File.OpenRead(filepath);
-var secrets = JsonSerializer.Deserialize<JsonElement>(json);
-var endpoints = secrets.GetProperty("Endpoints");
-var chatClients = new List<ChatClient>();
-
-Console.WriteLine("Loading Chat Clients");
-
-foreach (var endpoint in endpoints.EnumerateArray())
-{
-    var endpointName = endpoint.GetProperty("Name").GetString();
-    var endpointDeployment = endpoint.GetProperty("Deployment").GetString();
-    var endpointUri = endpoint.GetProperty("TargetURI").GetString();
-    var endpointKey = endpoint.GetProperty("Key").GetString();
-    Console.WriteLine($"{endpointName}: {endpointDeployment}");
-    AzureKeyCredential credential = new AzureKeyCredential(endpointKey);
-    AzureOpenAIClient azureClient = new AzureOpenAIClient(new Uri(endpointUri), credential);
-    chatClients.Add(azureClient.GetChatClient(endpointDeployment));
-}
+var chatClients = LoadAvailableChatClients();
 
 Console.WriteLine($"Select a chat client: [0-{chatClients.Count - 1}]");
 
 var userChoice = Console.ReadLine();
-var chatClient = chatClients[int.Parse(userChoice)];
+var chatClient = chatClients[int.Parse(userChoice!)];
 
 // ADJUST RETENTION AS NEEDED
 var metaPrompt = "You are a short-tempered AI assistant.";
@@ -43,7 +23,7 @@ Console.WriteLine("Type 'exit' to quit.");
 while (true)
 {
     Console.Write("You: ");
-    string message = Console.ReadLine();
+    string message = Console.ReadLine()!;
     if (message == "exit")
     {
         break;
@@ -52,8 +32,35 @@ while (true)
     //optional verbose flag
     ChatCompletion completion = await orchestrator.GetResponse(message);
     //ChatCompletion completion = await orchestrator.GetResponse(message, true);
-    foreach (var choice in completion.Content)
+    foreach (var value in completion.Content)
     {
-        Console.WriteLine($"Bot: {choice.Text}");
+        Console.WriteLine($"Bot: {value.Text}");
     }
+}
+
+static List<ChatClient> LoadAvailableChatClients()
+{
+    Console.WriteLine("Loading URI and Access Key");
+    var appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+    var filepath = Path.Combine(appdata, "secrets.json");
+    var json = File.OpenRead(filepath);
+    var secrets = JsonSerializer.Deserialize<JsonElement>(json);
+    var endpoints = secrets.GetProperty("Endpoints");
+    var chatClients = new List<ChatClient>();
+
+    Console.WriteLine("Loading Chat Clients");
+
+    foreach (var endpoint in endpoints.EnumerateArray())
+    {
+        var endpointName = endpoint.GetProperty("Name").GetString();
+        var endpointDeployment = endpoint.GetProperty("Deployment").GetString();
+        var endpointUri = endpoint.GetProperty("TargetURI").GetString();
+        var endpointKey = endpoint.GetProperty("Key").GetString();
+        Console.WriteLine($"{endpointName}: {endpointDeployment}");
+        AzureKeyCredential credential = new AzureKeyCredential(endpointKey);
+        AzureOpenAIClient azureClient = new AzureOpenAIClient(new Uri(endpointUri), credential);
+        chatClients.Add(azureClient.GetChatClient(endpointDeployment));
+    }
+
+    return chatClients;
 }

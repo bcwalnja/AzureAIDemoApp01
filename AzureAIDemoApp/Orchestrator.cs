@@ -44,7 +44,8 @@ namespace AzureAIDemoApp
         {
             _messages.Add(new UserChatMessage(message));
 
-            if (_messages.Count > retentionCount)
+            // add one because of meta prompt
+            if (_messages.Count > retentionCount + 1)
             {
                 _messages.RemoveAt(1);
             }
@@ -69,7 +70,8 @@ namespace AzureAIDemoApp
             var assistantMessages = completion.Content.Select(c => c.Text);
             _messages.Add(new AssistantChatMessage(string.Join("\n", assistantMessages)));
 
-            if (_messages.Count > retentionCount)
+            // add one because of meta prompt
+            if (_messages.Count > retentionCount + 1)
             {
                 _messages.RemoveAt(1);
             }

@@ -58,23 +58,3 @@ while (true)
         Console.WriteLine($"Bot: {choice.Text}");
     }
 }
-
-/*
- * Sample json:
- {
-  "Endpoints": [
-    {
-      "Name": "Bot1",
-      "Deployment": "gpt-35-turbo",
-      "TargetURI": "https://",
-      "Key": "..."
-    },
-    {
-      "Name": "Bot2",
-      "Deployment": "gpt-4",
-      "TargetURI": "https://",
-      "Key": "..."
-    }
-  ]
-}
- */

@@ -1,9 +1,12 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
+using AzureAIDemoApp;
 using OpenAI.Chat;
 using System.Text.Json;
 
-var filepath = @"C:\Users\User\.secrets\secrets.json";
+
+var appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+var filepath = Path.Combine(appdata, "secrets.json");
 var json = File.OpenRead(filepath);
 var secrets = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
 var endpoint = secrets["TargetURI"];
@@ -13,20 +16,22 @@ AzureKeyCredential credential = new AzureKeyCredential(key);
 AzureOpenAIClient azureClient = new(new Uri(endpoint), credential);
 ChatClient chatClient = azureClient.GetChatClient("gpt-35-turbo");
 
-var message = "How do I install Visual Studio?";
+// ADJUST RETENTION AS NEEDED
+var rententionCount = 3;
+var orchestrator = new Orchestrator(chatClient, rententionCount);
 
-ChatCompletion completion = chatClient.CompleteChat( [ new SystemChatMessage(message) ],
-  new ChatCompletionOptions()
-  {
-      Temperature = (float)0.7,
-      MaxTokens = 800,
-      FrequencyPenalty = 0,
-      PresencePenalty = 0,
-  }
-);
-
-foreach (var content in completion.Content)
+while (true)
 {
-    Console.WriteLine($"{content.Kind}: { content.Text}"); 
-}
+    Console.Write("You: ");
+    string message = Console.ReadLine();
+    if (message == "exit")
+    {
+        break;
+    }
 
+    ChatCompletion completion = await orchestrator.GetResponse(message);
+    foreach (var choice in completion.Content)
+    {
+        Console.WriteLine($"Bot: {choice.Text}");
+    }
+}

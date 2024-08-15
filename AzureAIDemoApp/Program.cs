@@ -13,12 +13,14 @@ var chatClient = chatClients[int.Parse(userChoice!)];
 
 // **** Try adjusting the meta prompt
 
-var metaPrompt = string.Empty;
+//var metaPrompt = string.Empty;
 //var metaPrompt = "You are a short-tempered AI assistant.";
 //var metaPrompt = "You are an extremely cheerful AI assistant. " +
 //    "Help people and improve their day!";
 //var metaPrompt = "You are an AI assistant. You respond via SMS. " +
 //    "You must never exceed 140 characters.";
+var metaPrompt = 
+    "You are a wise old mentor to tech workers, programmers, system administrators, etc. ";
 
 // **** Try adjusting the retention count
 var rententionCount = 3;

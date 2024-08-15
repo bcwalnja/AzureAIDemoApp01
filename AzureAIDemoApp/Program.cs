@@ -4,22 +4,35 @@ using AzureAIDemoApp;
 using OpenAI.Chat;
 using System.Text.Json;
 
-
 Console.WriteLine("Loading URI and Access Key");
 var appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 var filepath = Path.Combine(appdata, "secrets.json");
 var json = File.OpenRead(filepath);
-var secrets = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-var endpoint = secrets["TargetURI"];
-var key = secrets["Key"];
+var secrets = JsonSerializer.Deserialize<JsonElement>(json);
+var endpoints = secrets.GetProperty("Endpoints");
+var chatClients = new List<ChatClient>();
 
-Console.WriteLine("Creating Chat Client");
-AzureKeyCredential credential = new AzureKeyCredential(key);
-AzureOpenAIClient azureClient = new(new Uri(endpoint), credential);
-ChatClient chatClient = azureClient.GetChatClient("gpt-35-turbo");
+Console.WriteLine("Loading Chat Clients");
+
+foreach (var endpoint in endpoints.EnumerateArray())
+{
+    var endpointName = endpoint.GetProperty("Name").GetString();
+    var endpointDeployment = endpoint.GetProperty("Deployment").GetString();
+    var endpointUri = endpoint.GetProperty("TargetURI").GetString();
+    var endpointKey = endpoint.GetProperty("Key").GetString();
+    Console.WriteLine($"{endpointName}: {endpointDeployment}");
+    AzureKeyCredential credential = new AzureKeyCredential(endpointKey);
+    AzureOpenAIClient azureClient = new AzureOpenAIClient(new Uri(endpointUri), credential);
+    chatClients.Add(azureClient.GetChatClient(endpointDeployment));
+}
+
+Console.WriteLine($"Select a chat client: [0-{chatClients.Count - 1}]");
+
+var userChoice = Console.ReadLine();
+var chatClient = chatClients[int.Parse(userChoice)];
 
 // ADJUST RETENTION AS NEEDED
-var metaPrompt = "You are a friendly AI assistant.";
+var metaPrompt = "You are a short-tempered AI assistant.";
 var rententionCount = 3;
 Console.WriteLine("Starting Chat Orchestrator");
 Console.WriteLine("Meta Prompt: " + metaPrompt);
@@ -37,9 +50,31 @@ while (true)
         break;
     }
 
+    //optional verbose flag
     ChatCompletion completion = await orchestrator.GetResponse(message);
+    //ChatCompletion completion = await orchestrator.GetResponse(message, true);
     foreach (var choice in completion.Content)
     {
         Console.WriteLine($"Bot: {choice.Text}");
     }
 }
+
+/*
+ * Sample json:
+ {
+  "Endpoints": [
+    {
+      "Name": "Bot1",
+      "Deployment": "gpt-35-turbo",
+      "TargetURI": "https://",
+      "Key": "..."
+    },
+    {
+      "Name": "Bot2",
+      "Deployment": "gpt-4",
+      "TargetURI": "https://",
+      "Key": "..."
+    }
+  ]
+}
+ */

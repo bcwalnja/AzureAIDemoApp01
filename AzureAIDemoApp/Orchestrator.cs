@@ -22,9 +22,19 @@ namespace AzureAIDemoApp
             _messages.Add(new SystemChatMessage(metaPrompt));
         }
 
-        public async Task<ChatCompletion> GetResponse(string message)
+        public async Task<ChatCompletion> GetResponse(string message, bool verbose = false)
         {
             AddUserMessageToMessages(message);
+
+            if (verbose)
+            {
+                Console.WriteLine("Content Being Sent:");
+                foreach (var m in _messages)
+                {
+                    Console.WriteLine(m.GetType().Name + ": " + string.Join(" ", m.Content.Select(x => x.Text)));
+                }
+            }
+
             ChatCompletion completion = await CompleteChatAsync();
             AddBotMessageToMessages(completion);
             return completion;

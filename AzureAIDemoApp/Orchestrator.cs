@@ -10,13 +10,16 @@ namespace AzureAIDemoApp
     internal class Orchestrator
     {
         private readonly ChatClient _chatClient;
+        private readonly string metaPrompt;
         private readonly int retentionCount;
         private readonly List<ChatMessage> _messages = [];
 
-        public Orchestrator(ChatClient chatClient, int retentionCount)
+        public Orchestrator(ChatClient chatClient, string metaPrompt, int retentionCount)
         {
             _chatClient = chatClient;
+            this.metaPrompt = metaPrompt;
             this.retentionCount = retentionCount;
+            _messages.Add(new SystemChatMessage(metaPrompt));
         }
 
         public async Task<ChatCompletion> GetResponse(string message)
@@ -29,11 +32,11 @@ namespace AzureAIDemoApp
 
         private void AddUserMessageToMessages(string message)
         {
-            _messages.Add(new SystemChatMessage(message));
+            _messages.Add(new UserChatMessage(message));
 
             if (_messages.Count > retentionCount)
             {
-                _messages.RemoveAt(0);
+                _messages.RemoveAt(1);
             }
         }
 
@@ -58,7 +61,7 @@ namespace AzureAIDemoApp
 
             if (_messages.Count > retentionCount)
             {
-                _messages.RemoveAt(0);
+                _messages.RemoveAt(1);
             }
         }
     }

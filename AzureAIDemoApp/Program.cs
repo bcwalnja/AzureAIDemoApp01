@@ -11,7 +11,7 @@ Console.WriteLine($"Select a chat client: [0-{chatClients.Count - 1}]");
 var userChoice = Console.ReadLine();
 var chatClient = chatClients[int.Parse(userChoice!)];
 
-// Try adjusting the meta prompt
+// **** Try adjusting the meta prompt
 
 var metaPrompt = string.Empty;
 //var metaPrompt = "You are a short-tempered AI assistant.";
@@ -20,8 +20,12 @@ var metaPrompt = string.Empty;
 //var metaPrompt = "You are an AI assistant. You respond via SMS. " +
 //    "You must never exceed 140 characters.";
 
-// Try adjusting the retention count
+// **** Try adjusting the retention count
 var rententionCount = 3;
+//var rententionCount = 6;
+
+// **** Try adjusting verbose
+var verbose = false;
 
 
 Console.WriteLine("Starting Chat Orchestrator");
@@ -42,8 +46,7 @@ while (true)
     }
 
     //optional verbose flag
-    ChatCompletion completion = await orchestrator.GetResponse(message);
-    //ChatCompletion completion = await orchestrator.GetResponse(message, true);
+    ChatCompletion completion = await orchestrator.GetResponse(message, verbose);
     foreach (var value in completion.Content)
     {
         Console.WriteLine($"Bot: {value.Text}");

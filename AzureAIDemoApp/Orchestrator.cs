@@ -1,9 +1,4 @@
 ﻿using OpenAI.Chat;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AzureAIDemoApp
 {
@@ -24,20 +19,27 @@ namespace AzureAIDemoApp
 
         public async Task<ChatCompletion> GetResponse(string message, bool verbose = false)
         {
-            AddUserMessageToMessages(message);
-
-            if (verbose)
+            try
             {
-                Console.WriteLine("Content Being Sent:");
-                foreach (var m in _messages)
-                {
-                    Console.WriteLine(m.GetType().Name + ": " + string.Join(" ", m.Content.Select(x => x.Text)));
-                }
-            }
+                AddUserMessageToMessages(message);
 
-            ChatCompletion completion = await CompleteChatAsync();
-            AddBotMessageToMessages(completion);
-            return completion;
+                if (verbose)
+                {
+                    Console.WriteLine("Content Being Sent:");
+                    foreach (var m in _messages)
+                    {
+                        Console.WriteLine(m.GetType().Name + ": " + string.Join(" ", m.Content.Select(x => x.Text)));
+                    }
+                }
+
+                ChatCompletion completion = await CompleteChatAsync();
+                AddBotMessageToMessages(completion);
+                return completion;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         private void AddUserMessageToMessages(string message)

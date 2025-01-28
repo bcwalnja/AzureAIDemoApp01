@@ -1,25 +1,25 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
 using AzureAIDemoApp;
+using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
-using System.Text.Json;
 
 Console.WriteLine("Loading URI and Access Key");
-var appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-var filepath = Path.Combine(appdata, "secrets.json");
-var json = File.OpenRead(filepath);
-var secrets = JsonSerializer.Deserialize<JsonElement>(json);
-var endpoints = secrets.GetProperty("Endpoints");
+
+var builder = new ConfigurationBuilder()
+    .AddUserSecrets<Program>();
+var configuration = builder.Build();
+var endpoints = configuration.GetSection("Endpoints").GetChildren();
 var chatClients = new List<ChatClient>();
 
 Console.WriteLine("Loading Chat Clients");
 
-foreach (var endpoint in endpoints.EnumerateArray())
+foreach (var endpoint in endpoints)
 {
-    var endpointName = endpoint.GetProperty("Name").GetString();
-    var endpointDeployment = endpoint.GetProperty("Deployment").GetString();
-    var endpointUri = endpoint.GetProperty("TargetURI").GetString();
-    var endpointKey = endpoint.GetProperty("Key").GetString();
+    var endpointName = endpoint["Name"];
+    var endpointDeployment = endpoint["Deployment"];
+    var endpointUri = endpoint["TargetURI"];
+    var endpointKey = endpoint["Key"];
     Console.WriteLine($"{endpointName}: {endpointDeployment}");
     AzureKeyCredential credential = new AzureKeyCredential(endpointKey);
     AzureOpenAIClient azureClient = new AzureOpenAIClient(new Uri(endpointUri), credential);
@@ -32,7 +32,7 @@ var userChoice = Console.ReadLine();
 var chatClient = chatClients[int.Parse(userChoice)];
 
 // ADJUST RETENTION AS NEEDED
-var metaPrompt = "You are a short-tempered AI assistant.";
+var metaPrompt = "As an SMS bot, you must never exceed 250 characters.";
 var rententionCount = 3;
 Console.WriteLine("Starting Chat Orchestrator");
 Console.WriteLine("Meta Prompt: " + metaPrompt);
@@ -42,7 +42,6 @@ Console.WriteLine("Type 'exit' to quit.");
 
 while (true)
 {
-    // add logging to this code
     Console.Write("You: ");
     string message = Console.ReadLine();
     if (message == "exit")
@@ -51,30 +50,16 @@ while (true)
     }
 
     //optional verbose flag
-    ChatCompletion completion = await orchestrator.GetResponse(message);
-    //ChatCompletion completion = await orchestrator.GetResponse(message, true);
-    foreach (var choice in completion.Content)
+    try
     {
-        Console.WriteLine($"Bot: {choice.Text}");
+        ChatCompletion completion = await orchestrator.GetResponse(message);
+        foreach (var choice in completion.Content)
+        {
+            Console.WriteLine($"Bot: {choice.Text}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
     }
 }
-
-/*
- * Sample json:
- {
-  "Endpoints": [
-    {
-      "Name": "Bot1",
-      "Deployment": "gpt-35-turbo",
-      "TargetURI": "https://",
-      "Key": "..."
-    },
-    {
-      "Name": "Bot2",
-      "Deployment": "gpt-4",
-      "TargetURI": "https://",
-      "Key": "..."
-    }
-  ]
-}
- */
